@@ -7,11 +7,11 @@ name=$(yq '.name' file.yaml)
 echo "=====> Hello, $name. Change Name?"
 echo "[Press y for yes, n for no, other to cancel] =====>"
 read -r resp
-if [ $resp == "n" ]; then
+if [ "$resp" == "n" ]; then
 echo "=====> Ending..." ; exit 1;
-elif [ $resp == "y" -a $name == "Fido" ]; then
+elif [ "$resp" == "y" ] && [ "$name" == "Fido" ]; then
 yq -i '.name = "Woofer"' file.yaml
-elif [ $resp == "y" -a $name == "Woofer" ]; then
+elif [ "$resp" == "y" ] && [ "$name" == "Woofer" ]; then
 yq -i '.name = "Fido"' file.yaml
 else
 echo "=====> Ending..." ; exit 1;

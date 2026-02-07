@@ -1,4 +1,5 @@
 #! /bin/bash
+
 timerunner () {
 	rt=$(tput sgr0); r=$(tput setaf 1); g=$(tput setaf 2); y=$(tput setaf 3); c=$(tput setaf 6); b=$(tput bold);
 	start="$(date +%s)"
@@ -8,7 +9,6 @@ timerunner () {
 	sleep 1; 
 	echo "$start" ;
 }
-timerunner
 lang-paths () {
 	for X in bash git yq ; do			
 	echo -n "$X =====> "; which $X ;
@@ -110,7 +110,7 @@ notes-do () {
 	"
 }
 
-
+timerunner
 IFS=,;
 local_user=$USER \
 yq -i '.configuration.meta.local-user = env(local_user)' runner.yaml ; 
@@ -234,10 +234,9 @@ if [ ${#message} -gt 2 ] ; then
 	echo "[SUCCESS] =====> "
 	commit=$message\
 	yq -i '.configuration.meta.latest-commit = env(commit)' runner.yaml ;
+	git_commit "$dry_run" "$message" ;
 
-git_commit "$dry_run" "$message" ;
-
-else
+	else
 	git reset ;
 	echo "=====> Too few characters (# < 3) Exiting..."
 	echo "=====> Commit cancelled..." ; closeout true;
@@ -248,9 +247,10 @@ build-echo "[Press p to confirm] =====> " 6;
 read -r pushed
 
 if [ "$pushed" == "p" ] ; then
-echo "Data pushing: " ; pink-echo "$message" ;
-rsync_push "$dry_run" "$rsync_enabled";
-else
-git reset ;
-cyan-echo "=====> Push cancelled..." ; closeout ;
+	echo "Data pushing: " ; pink-echo "$message" ;
+	rsync_push "$dry_run" "$rsync_enabled" ;
+
+	else
+	git reset ;
+	cyan-echo "=====> Push cancelled..." ; closeout ;
 fi
