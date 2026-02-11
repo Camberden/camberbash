@@ -102,8 +102,8 @@ notes-do () {
 	# rev	Start reverse video
 	# blink	Start blinking text
 	# invis	Start invisible text
-	# smso	Start “standout” mode
-	# rmso	End “standout” mode
+	# smso	Start 'standout' mode
+	# rmso	End 'standout' mode
 	# sgr0	Turn off all attributes
 	# setaf <value>	Set foreground color
 	# setab <value>	Set background color
@@ -113,18 +113,21 @@ notes-do () {
 timerunner
 IFS=,;
 local_user=$USER \
-yq -i '.configuration.meta.local-user = env(local_user)' runner.yaml ; 
+yq -i '.configuration.local.user = env(local_user)' runner.yaml ; 
 local_dir=$(pwd)/ \
-yq -i '.configuration.meta.local-dir = env(local_dir)' runner.yaml ;
+yq -i '.configuration.local.dir = env(local_dir)' runner.yaml ;
 
 #@ yaml_value="$( yq '.configuration._____' runner.yaml)" ;
-local_user="$( yq '.configuration.meta.local-user' runner.yaml)" ;
-local_dir="$( yq '.configuration.meta.local-dir' runner.yaml)" ;
-remote_user="$( yq '.configuration.meta.remote-user' runner.yaml)" ;
-remote_host="$( yq '.configuration.meta.remote-host' runner.yaml)"
-remote_dir="$( yq '.configuration.meta.remote-dir' runner.yaml)"
-dry_run="$( yq '.configuration.meta.dry-run' runner.yaml)" ;
-rsync_enabled="$( yq '.configuration.rsync-args.rsync-enabled' runner.yaml)" ;
+local_user="$( yq '.configuration.local.user' runner.yaml)" ;
+local_dir="$( yq '.configuration.local.dir' runner.yaml)" ;
+remote_user="$( yq '.configuration.remote.user' runner.yaml)" ;
+remote_host="$( yq '.configuration.remote.host' runner.yaml)" ;
+remote_dir="$( yq '.configuration.remote.dir' runner.yaml)" ;
+ssh_port="$( yq '.configuration.remote.ssh-port' runner.yaml)" ;
+# git_enabled="$( yq '.configuration.git.enabled' runner.yaml)" ;
+# git_dry_run="$( yq '.configuration.git.dry-run' runner.yaml)" ;
+rsync_enabled="$( yq '.configuration.rsync.enabled' runner.yaml)" ;
+dry_run="$( yq '.configuration.rsync.dry-run' runner.yaml)" ;
 remote_path="$remote_user$remote_host:$remote_dir" ;
 
 git_add () {
@@ -170,7 +173,7 @@ rsync_push () {
 		yellow-echo "=====> DRY COMMIT & PUSH COMPLETE =====>" ;
 		if $2 ; then
 		cyan-echo "=====> DRY RSYNCED TO SERVER: =====> " ; #-havzune
-		rsync -havzune 'ssh -p 6543' --exclude={'*.yaml','*.git','*.sh','*.gitignore','.DS_Store'} ./* "$remote_path" ;
+		rsync -havzun -e "ssh -p $ssh_port" --exclude-from=.gitignore ./* "$remote_path" ;
 		cyan-echo "=====> DRY COMMIT, PUSH, & RSYNC COMPLETE =====>/" ;
 		fi
 		closeout ;
@@ -179,8 +182,8 @@ rsync_push () {
 		git push ;
 		yellow-echo "=====> GIT COMMIT & PUSH COMPLETE =====>" ;
 		if $2 ; then
-		cyan-echo "=====> DRY RSYNCED TO SERVER: =====> " ; #-havzue
-		rsync -havzue 'ssh -p 6543' --exclude={'*.yaml','*.git','*.sh','*.gitignore','.DS_Store'} ./* "$remote_path" 
+		cyan-echo "=====> RSYNCED TO SERVER: =====> " ; #-havzue
+		rsync -havzu -e "ssh -p $ssh_port" --exclude-from=.gitignore ./* "$remote_path" 
 		yellow-echo "=====> RSYNC COMPLETE =====>" ;
 		fi
 		closeout ;
@@ -192,10 +195,8 @@ rsync_pull () {
 	#@ $2 Rsync Pull? true | false
 	if $1 && $2 ; then
 		cyan-echo "=====> DRY RSYNCED PULLED FROM SERVER: =====> " ; #-havzune
-			rsync -chavznP -e "ssh -p 6543" "$remote_path" ./* 
+			rsync -chavznP -e "ssh -p $ssh_port" --exclude-from=.gitignore "$remote_path" ./* 
 	fi
-	
-
 }
 
 yellow-echo "SOURCE DIRECTORY =====> $local_dir" ;
@@ -218,7 +219,7 @@ if [ "$dry_run" ] && [ "$message" == "w" ] ; then
 	build-echo "=====> [WET RUN (OVERWRITE MODE) ENABLED] =====> " 3;
 	git reset ;
 	pink-echo "=====> Rerun enabled utility. Exiting..." ;
-	yq -i .configuration.meta.dry-run=false runner.yaml
+	yq -i .configuration.rsync.dry-run=false runner.yaml
 	closeout false ;
 fi
 
@@ -226,7 +227,7 @@ if [ "$dry_run" == false ] && [ "$message" == "d" ] ; then
 	build-echo "=====> [DRY RUN (SAFE MODE) ENABLED] =====> " 2;
 	git reset ;
 	pink-echo "=====> Rerun utility for safe testing. Exiting..." ;
-	yq -i .configuration.meta.dry-run=true runner.yaml
+	yq -i .configuration.rsync.dry-run=true runner.yaml
 	closeout false ;
 fi 
 
