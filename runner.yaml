@@ -1,0 +1,19 @@
+configuration:
+  meta:
+    site: yourwebsite.com
+    latest-commit: your latest commit will be written
+  local:
+    user: localuser
+    dir: /Users/user/local/repository
+  remote:
+    user: remoteuser
+    host: 123.45.678.901
+    dir: public_html/yourwebsite
+    ssh-port: 1234
+  git:
+    enabled: true
+    dry-run: false
+  rsync:
+    enabled: false
+    dry-run: false
+    pull: false
